@@ -64,30 +64,49 @@ def simplex(c, a, b, maxiter=100):
                 4: "Optimization failed. Singular matrix encountered."}
     nit = 0
     complete = False
+    vdnl, snc = a.shape
+    variables = np.full(vdnl + snc, -1.0)
+    for i in range(vdnl, vdnl + snc):
+        if i < vdnl:
+            variables[i] = i
+        else:
+            variables[i] = i - vdnl
     tab = generate_tab_initial(a, b, c)
     nl, nc = tab.shape
     while not complete:
-        colone_pivot_existe, _, colone_pivot = positive(tab[nl - 1, :])
-        if not colone_pivot_existe:
-            status = 0
-            complete = True
-        ligne_pivot_existe, ligne_pivot = rapport_min(tab[:, colone_pivot], tab[:, nc - 1])
-        if not ligne_pivot_existe:
-            status = 3
-            complete = True
         if nit >= maxiter:
             # Iteration limit exceeded
             status = 1
             complete = True
         else:
+            colone_pivot_existe, _, colone_pivot = positive(tab[nl - 1, :])
+            if not colone_pivot_existe:
+                status = 0
+                break
+            ligne_pivot_existe, ligne_pivot = rapport_min(tab[:, colone_pivot], tab[:, nc - 1])
+            if not ligne_pivot_existe:
+                status = 3
+                break
+            for i in range(vdnl + snc):
+                if variables[i] == ligne_pivot:
+                    variables[i] = -1
+            else:
+                variables[ligne_pivot + vdnl] = -1
+            variables[colone_pivot] = ligne_pivot
             tab = pivot_gauss(tab, ligne_pivot, colone_pivot)
             nit += 1
 
+    for i in range(vdnl + snc):
+        if variables[i] == -1:
+            variables[i] = 0
+        else:
+            variables[i] = tab[int(variables[i]), nc - 1]
+
     sol = {
-        'x': tab[:, nc - 1],
+        'x': variables[:vdnl],
         'fun': -tab[nl - 1, nc - 1],
-        # 'slack': slack,
-        # 'con': con,
+        'slack': variables[vdnl:],
+        #'con': con,
         'status': status,
         'message': messages[status],
         'nit': nit,
