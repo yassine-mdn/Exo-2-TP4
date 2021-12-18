@@ -26,6 +26,7 @@ def positive(v):
             test = True
             index = i
             min = v[i]
+
     return test, min, index
 
 
@@ -37,10 +38,8 @@ def rapport_min(a, b):
             if b[i] / a[i] < min:
                 min = b[i] / a[i]
                 index = i
-    if index == -1:
-        return False, index
-    else:
-        return True, index
+
+    return index == -1, index
 
 
 def pivot_gauss(a, l, c):
@@ -78,20 +77,23 @@ def simplex(c, a, b, maxiter=100):
             # Iteration limit exceeded
             status = 1
             complete = True
+
         else:
             colone_pivot_existe, _, colone_pivot = positive(tab[nl - 1, :])
             if not colone_pivot_existe:
                 status = 0
                 break
+
             ligne_pivot_existe, ligne_pivot = rapport_min(tab[:, colone_pivot], tab[:, nc - 1])
             if not ligne_pivot_existe:
                 status = 3
                 break
+
             for i in range(vdnl + snc):
                 if variables[i] == ligne_pivot:
                     variables[i] = -1
-            else:
-                variables[ligne_pivot + vdnl] = -1
+
+            variables[ligne_pivot + vdnl] = -1
             variables[colone_pivot] = ligne_pivot
             tab = pivot_gauss(tab, ligne_pivot, colone_pivot)
             nit += 1
@@ -106,7 +108,6 @@ def simplex(c, a, b, maxiter=100):
         'x': variables[:vdnl],
         'fun': -tab[nl - 1, nc - 1],
         'slack': variables[vdnl:],
-        #'con': con,
         'status': status,
         'message': messages[status],
         'nit': nit,
